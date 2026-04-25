@@ -1,0 +1,51 @@
+# Block C — PID Fine-Tune
+# Betaflight 4.5.0 / BLITZ F722 / Nazgul DC5 V2
+#
+# Flash AFTER Block B filters are confirmed clean.
+# See docs/pid_analysis.md for how to determine correct values.
+#
+# IMPORTANT: Fill in the [PLACEHOLDER] values based on blackbox analysis
+# before flashing. Start from profile_freestyle.txt or profile_cinematic.txt
+# values and adjust from there.
+#
+# HOW TO FLASH:
+#   1. Analyze blackbox per docs/pid_analysis.md
+#   2. Select correct profile (0=Freestyle, 1=Cinematic)
+#   3. Fill in adjusted values below
+#   4. Connect FC via USB
+#   5. Betaflight Configurator -> CLI tab
+#   6. Paste everything below
+#   7. Type: save
+# -------------------------------------------------------
+
+# Select target profile (change as needed)
+profile 0
+
+# --- P gains ---
+# Too high: oscillation at end of roll/flip
+# Too low: mushy, doesn't track
+set p_roll = [PLACEHOLDER]
+set p_pitch = [PLACEHOLDER]
+set p_yaw = [PLACEHOLDER]
+
+# --- I gains ---
+# Too high: low-frequency wobble, bobbing
+# Too low: drifts in wind, doesn't hold attitude
+set i_roll = [PLACEHOLDER]
+set i_pitch = [PLACEHOLDER]
+set i_yaw = [PLACEHOLDER]
+
+# --- D gains ---
+# Too high: high-frequency oscillation, motors hot
+# Too low: propwash on exit from dives
+set d_roll = [PLACEHOLDER]
+set d_pitch = [PLACEHOLDER]
+
+# --- Feedforward ---
+# Too high: sharp spikes at stick input edges
+# Too low: sluggish response on fast stick inputs
+set f_roll = [PLACEHOLDER]
+set f_pitch = [PLACEHOLDER]
+set f_yaw = [PLACEHOLDER]
+
+save

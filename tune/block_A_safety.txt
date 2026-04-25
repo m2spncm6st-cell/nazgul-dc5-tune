@@ -1,0 +1,49 @@
+# Block A — Safety Fixes
+# Flash this FIRST before any flights
+# Betaflight 4.5.0 / BLITZ F722 / Nazgul DC5 V2
+#
+# Changes from stock:
+#   - failsafe_delay: 120 -> 15  (was 12 seconds! now 1.5s)
+#   - failsafe_procedure: DROP -> GPS_RESCUE  (flies over water)
+#   - GPS Rescue strict sanity checks enabled
+#   - motor_kv: 1960 -> 1800  (correct for 5" freestyle motors)
+#   - dshot_bitbang: AUTO -> OFF  (F7 doesn't need it, saves CPU)
+#   - rpm_filter_weights: default -> 100,80,60  (tri-blade props)
+#
+# HOW TO FLASH:
+#   1. Connect FC via USB
+#   2. Betaflight Configurator -> CLI tab
+#   3. Paste everything below this line
+#   4. Type: save
+# -------------------------------------------------------
+
+set failsafe_delay = 15
+set failsafe_off_delay = 10
+set failsafe_throttle = 1000
+set failsafe_switch_mode = STAGE1
+set failsafe_throttle_low_delay = 100
+set failsafe_procedure = GPS_RESCUE
+
+set gps_rescue_min_sats = 8
+set gps_rescue_allow_arming_without_fix = OFF
+set gps_rescue_sanity_checks = RESCUE_SANITY_ON
+set gps_rescue_min_start_dist = 20
+set gps_rescue_ascend_rate = 500
+set gps_rescue_descend_rate = 150
+set gps_rescue_ground_speed = 1500
+set gps_rescue_throttle_min = 1150
+set gps_rescue_throttle_max = 1700
+set gps_rescue_throttle_hover = 1380
+set gps_rescue_angle = 32
+set gps_rescue_return_alt = 30
+set gps_rescue_landing_alt = 5
+set gps_rescue_disarm_threshold = 20
+
+set motor_kv = 1800
+set dshot_bitbang = OFF
+
+set gyro_rpm_notch_harmonics = 3
+set rpm_filter_weights = 100,80,60
+set gyro_rpm_notch_q = 500
+
+save

@@ -1,0 +1,54 @@
+# Block B — Filter Optimization
+# Betaflight 4.5.0 / BLITZ F722 / Nazgul DC5 V2
+#
+# Flash AFTER analyzing the blackbox log from the tuning flight.
+# See docs/filter_analysis.md for how to determine correct values.
+#
+# IMPORTANT: Fill in the [PLACEHOLDER] values based on blackbox analysis
+# before flashing. Do not flash with placeholders!
+#
+# HOW TO FLASH:
+#   1. Analyze blackbox log per docs/filter_analysis.md
+#   2. Fill in values below
+#   3. Connect FC via USB
+#   4. Betaflight Configurator -> CLI tab
+#   5. Paste everything below this line
+#   6. Type: save
+# -------------------------------------------------------
+
+# --- Disable simplified filter slider (use manual values) ---
+set simplified_gyro_filter = OFF
+set simplified_dterm_filter = OFF
+
+# --- Gyro LPF1 (dynamic notch pre-filter) ---
+# Set based on noise floor from blackbox
+# Typical range for clean ICM42688P + RPM filter: 200-400 Hz
+set gyro_lpf1_dyn_min_hz = [PLACEHOLDER: e.g. 250]
+set gyro_lpf1_dyn_max_hz = [PLACEHOLDER: e.g. 500]
+set gyro_lpf1_type = BIQUAD
+
+# --- Gyro LPF2 (second stage) ---
+# Can often be disabled if RPM filter + LPF1 is sufficient
+# set gyro_lpf2_hz = 0   # Disable = lowest latency
+set gyro_lpf2_hz = [PLACEHOLDER: e.g. 350 or 0 to disable]
+set gyro_lpf2_type = PT1
+
+# --- Dynamic Notch Filter ---
+# With BiDir DSHOT + good RPM filter, dynamic notch can be light or off
+set dyn_notch_count = 1
+set dyn_notch_q = 300
+set dyn_notch_min_hz = 100
+set dyn_notch_max_hz = 600
+
+# --- D-term LPF (same for all profiles, tune per profile if needed) ---
+set dterm_lpf1_dyn_min_hz = [PLACEHOLDER: e.g. 75]
+set dterm_lpf1_dyn_max_hz = [PLACEHOLDER: e.g. 150]
+set dterm_lpf1_type = PT2
+set dterm_lpf2_hz = [PLACEHOLDER: e.g. 150 or 0 to disable]
+
+# --- RPM filter (already set in Block A, confirm still correct) ---
+set gyro_rpm_notch_harmonics = 3
+set rpm_filter_weights = 100,80,60
+set gyro_rpm_notch_q = 500
+
+save
