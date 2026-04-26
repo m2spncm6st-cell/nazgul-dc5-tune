@@ -1,20 +1,29 @@
 # Profile 0 — FREESTYLE
 # Betaflight 4.5.0 / BLITZ F722 / Nazgul DC5 V2
 #
-# Flash AFTER Block A.
-# This sets profile 0 with freestyle PIDs and rate profile 0.
+# Tuning method: Chris Rosser BF 4.5 Masterclass (PID + Rates videos)
+#
+# TUNING ORDER:
+#   1. Master Multiplier — raise until motors warm / trilling sound
+#   2. PD Balance (P:I slider, Dynamic Damping OFF) — PID Toolbox step response
+#   3. I Term (EY Gain slider) — raise until slow wobbles, back off
+#   4. Feedforward (Stick Response slider) — gyro tracks setpoint
+#   5. Dynamic Damping — only if FF overshoot visible in logs
 #
 # HOW TO FLASH:
-#   1. Connect FC via USB
-#   2. Betaflight Configurator -> CLI tab
-#   3. Paste everything below this line
-#   4. Type: save
+#   1. Connect FC via USB → Betaflight Configurator → CLI
+#   2. Paste everything below, type: save
 # -------------------------------------------------------
 
-# --- Select Profile 0 ---
 profile 0
 
-# --- PIDs (Betaflight 4.5 defaults as baseline, tune after blackbox) ---
+# --- PID Controller authority ---
+# Rosser: "Unleash your PID controller" — allows FC to push harder
+set pidsum_limit = 1000
+set pidsum_limit_yaw = 1000
+
+# --- PIDs — BF 4.5 defaults, tune per Rosser method ---
+# Tuning order: D → P → I → FF (NOT all at once)
 set p_roll = 47
 set i_roll = 84
 set d_roll = 46
@@ -30,54 +39,103 @@ set i_yaw = 90
 set d_yaw = 0
 set f_yaw = 120
 
-set angle_level_strength = 50
-set horizon_level_strength = 50
-
-# --- D-term filter (will be tuned in Block B after blackbox) ---
+# --- D-term filter (tuned in Block B after blackbox) ---
 set dterm_lpf1_dyn_min_hz = 75
 set dterm_lpf1_dyn_max_hz = 150
 set dterm_lpf1_type = PT2
 set dterm_lpf2_hz = 150
 set dterm_lpf2_type = PT1
 
-# --- iTerm relax (freestyle: roll/pitch only) ---
+# --- iTerm Relax ---
+# Freestyle: 15 is good. Racing/very responsive + high FF: raise to 30-40.
 set iterm_relax = RP
 set iterm_relax_type = SETPOINT
 set iterm_relax_cutoff = 15
 
-# --- Anti-gravity ---
-set anti_gravity_gain = 80
+# --- iterm_rotation & absolute_control: OFF ---
+# Rosser tested: they don't reduce PID error. Skip.
+set iterm_rotation = OFF
+set abs_control = OFF
 
-# --- TPA (throttle PID attenuation) ---
+# --- Anti-gravity ---
+# 80 = 8x iterm boost on fast throttle changes.
+# Reduce to 40-50 if wobbles appear on throttle punches.
+set anti_gravity_gain = 80
+set anti_gravity_p_gain = 100
+
+# --- TPA ---
+# 65% rate = PIDs reduced to 35% at full throttle
+# 1350 = attenuation starts at 35% throttle
 set tpa_rate = 65
-set tpa_breakpoint = 1500
+set tpa_breakpoint = 1350
 set tpa_mode = D
+
+# --- Dynamic Damping ---
+# CRITICAL: d_min_advance (Dynamic Damping Advanced) MUST stay 0!
+# Rosser: "I do not understand why it adds setpoint into D — don't use it."
+set d_min_roll = 30
+set d_min_pitch = 34
+set d_min_boost_gain = 37
+set d_min_advance = 0
 
 # --- Throttle boost ---
 set throttle_boost = 5
 set throttle_boost_cutoff = 15
 
-# --- Motor stop OFF for freestyle ---
+# --- Dynamic Idle ---
+# Rosser: critical for propwash, especially steeper pitch props.
+# 5" tri-blade ~4.8 pitch: 3500 RPM recommended
+set dyn_idle_min_rpm = 35
+set dyn_idle_p_gain = 50
+set dyn_idle_i_gain = 50
+set dyn_idle_d_gain = 0
+set dyn_idle_max_increase = 100
+
 set motor_stop = OFF
 
 
-# --- Rate Profile 0 — Freestyle ---
+# -------------------------------------------------------
+# RATE PROFILE 0 — FREESTYLE
+# Based on Rosser Rates video:
+#   Center Sensitivity 50-100 = typical freestyle
+#   Max Rate ~670 = dynamic freestyle (Rosser: 700 for "slightly more dynamic")
+#   Expo 0 = linear curve between center and max
+# -------------------------------------------------------
 rateprofile 0
 
 set rates_type = ACTUAL
-set roll_rc_rate = 200
-set pitch_rc_rate = 200
-set yaw_rc_rate = 160
 
+# Center Sensitivity (rc_rate): how sensitive around center stick
+# 50 = precise/cinematic, 100 = typical freestyle, 150 = dynamic/LOS
+set roll_rc_rate = 70
+set pitch_rc_rate = 70
+set yaw_rc_rate = 60
+
+# Expo: curve shape between center and max. 0 = linear.
+# Increase if center feels too sharp vs edges.
 set roll_expo = 0
 set pitch_expo = 0
 set yaw_expo = 0
 
+# Max Rate: rotation speed at full stick deflection
+# 500 = cinematic/racing, 700 = dynamic freestyle, 1100 = Mr Steele
+# Rosser: start at 400-500, increase only if you need more speed
 set roll_srate = 670
 set pitch_srate = 670
 set yaw_srate = 500
 
-set tpa_rate = 0
-set tpa_breakpoint = 1350
+# Throttle Expo (in Receiver tab — set manually in configurator)
+# Rosser: throttle_mid = 0, adjust expo for more low-throttle resolution
+# set throttle_mid = 0.5   ← set in Receiver tab, not CLI
+# set throttle_expo = 0.0  ← set in Receiver tab
+
+# RC Smoothing (in Receiver tab — set manually in configurator)
+# Rosser: default is for RACING and is WRONG for freestyle!
+# Set: Smoothing Mode = ON, Setpoint cutoff = AUTO, FF cutoff = AUTO
+# Auto Factor = 50-60 for freestyle  ← SET IN RECEIVER TAB
+# set rc_smoothing_auto_factor = 50  ← CLI equivalent
+
+set rc_smoothing_auto_factor = 50
+set rc_smoothing_mode = AUTO
 
 save

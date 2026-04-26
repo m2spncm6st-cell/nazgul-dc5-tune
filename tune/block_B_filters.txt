@@ -1,54 +1,138 @@
 # Block B — Filter Optimization
 # Betaflight 4.5.0 / BLITZ F722 / Nazgul DC5 V2
+# Based on Chris Rosser BF 4.5 Filter Tuning Masterclass
 #
 # Flash AFTER analyzing the blackbox log from the tuning flight.
-# See docs/filter_analysis.md for how to determine correct values.
+# See docs/filter_analysis.md for analysis steps.
 #
-# IMPORTANT: Fill in the [PLACEHOLDER] values based on blackbox analysis
-# before flashing. Do not flash with placeholders!
+# IMPORTANT: Fill in [PLACEHOLDER] values from your blackbox analysis.
+# Do NOT flash with placeholders still in the file!
 #
 # HOW TO FLASH:
-#   1. Analyze blackbox log per docs/filter_analysis.md
-#   2. Fill in values below
-#   3. Connect FC via USB
-#   4. Betaflight Configurator -> CLI tab
-#   5. Paste everything below this line
-#   6. Type: save
+#   1. Open blackbox log → Frequency vs Throttle view
+#   2. Fill in values below based on what you see
+#   3. Connect FC via USB → Betaflight CLI → Paste → save
 # -------------------------------------------------------
 
-# --- Disable simplified filter slider (use manual values) ---
-set simplified_gyro_filter = OFF
-set simplified_dterm_filter = OFF
+# -------------------------------------------------------
+# GYRO LOW PASS FILTERS
+# -------------------------------------------------------
 
-# --- Gyro LPF1 (dynamic notch pre-filter) ---
-# Set based on noise floor from blackbox
-# Typical range for clean ICM42688P + RPM filter: 200-400 Hz
-set gyro_lpf1_dyn_min_hz = [PLACEHOLDER: e.g. 250]
-set gyro_lpf1_dyn_max_hz = [PLACEHOLDER: e.g. 500]
-set gyro_lpf1_type = BIQUAD
+# Gyro LPF1: DISABLED by default — leave it off.
+# Rosser: "So many filters have been added over the years, LPF1 is no
+# longer required on most builds." Only enable if noise gets through everything else.
+set gyro_lpf1_static_hz = 0
+set gyro_lpf1_dyn_min_hz = 0
+set gyro_lpf1_dyn_max_hz = 0
 
-# --- Gyro LPF2 (second stage) ---
-# Can often be disabled if RPM filter + LPF1 is sufficient
-# set gyro_lpf2_hz = 0   # Disable = lowest latency
-set gyro_lpf2_hz = [PLACEHOLDER: e.g. 350 or 0 to disable]
+# Gyro LPF2: Anti-aliasing filter. Default 500 Hz is TOO LOW.
+# Rosser: "Slide the gyro filter multiplier all the way to the right = 1 kHz."
+# If your FC runs 8K gyro / 8K PID loop (same rate), you can set to 0 (disable).
+# BLITZ F722 with ICM42688P typically runs 3.6K/3.6K or 8K/8K → check in Betaflight.
+# When in doubt: leave at 1000 Hz, no harm in keeping it.
+set gyro_lpf2_static_hz = 1000
 set gyro_lpf2_type = PT1
 
-# --- Dynamic Notch Filter ---
-# With BiDir DSHOT + good RPM filter, dynamic notch can be light or off
+# -------------------------------------------------------
+# RPM FILTER
+# -------------------------------------------------------
+
+# Rosser on tri-blade:
+#   "Noise at 1x RPM (strong), almost NOTHING at 2x RPM, some at 3x"
+#   weights = 100, 0, 80  ← 2nd harmonic set to 0 = less delay, no loss
+#
+# Q factor: default 500. Push toward 1000 if logs show motor noise still getting through.
+# Check: pre-filter gyro vs post-filter gyro on same axis in Blackbox Explorer.
+# If no noise visible: increase Q. If noise escaping: decrease Q.
+set gyro_rpm_notch_harmonics = 3
+set rpm_filter_weights = 100,0,80
+set gyro_rpm_notch_q = 500
+
+# RPM Crossfade: filters fade in between min_hz and (min_hz + fade_range).
+# Default: fade from 100 to 150 Hz. Rosser: ok for 5" builds.
+# Look at where motor noise ACTUALLY starts in your log and adjust.
+# set gyro_rpm_notch_min = 100   ← already set in Block A / defaults
+
+# -------------------------------------------------------
+# DYNAMIC NOTCH FILTER
+# -------------------------------------------------------
+
+# Rosser: "Only needed for FRAME RESONANCES — vertical stripes in log."
+# "If your log is clean with no vertical stripes → disable it.
+#  The dynamic notch sitting there doing nothing still adds delay."
+#
+# STEP 1: Open log → Frequency vs Throttle view
+# STEP 2: Count vertical white stripes (fixed frequency, varies across throttle)
+# STEP 3: Set count = number of stripes. If none → set count = 0 (disabled!)
+#
+# If you see a stripe:
+#   - Set min_hz ~25 Hz BELOW the stripe frequency (never below 150 Hz)
+#   - Set max_hz = just above the stripe (or leave at 600 Hz default)
+#   - Q: push toward 1000, back off if noise escapes on either side
+
+# [ADJUST THESE based on your log - see instructions above]
 set dyn_notch_count = 1
 set dyn_notch_q = 300
-set dyn_notch_min_hz = 100
+set dyn_notch_min_hz = 150
 set dyn_notch_max_hz = 600
 
-# --- D-term LPF (same for all profiles, tune per profile if needed) ---
-set dterm_lpf1_dyn_min_hz = [PLACEHOLDER: e.g. 75]
-set dterm_lpf1_dyn_max_hz = [PLACEHOLDER: e.g. 150]
-set dterm_lpf1_type = PT2
-set dterm_lpf2_hz = [PLACEHOLDER: e.g. 150 or 0 to disable]
+# If NO frame resonance visible → uncomment this and comment out the lines above:
+# set dyn_notch_count = 0
 
-# --- RPM filter (already set in Block A, confirm still correct) ---
-set gyro_rpm_notch_harmonics = 3
-set rpm_filter_weights = 100,80,60
-set gyro_rpm_notch_q = 500
+# -------------------------------------------------------
+# D-TERM LOW PASS FILTERS
+# -------------------------------------------------------
+# Two approaches (Rosser): Karate (default) vs AOS tune
+#
+# KARATE (default, easier):
+#   - 2x PT1 filters
+#   - Tune via dterm filter slider in Configurator
+#   - More forgiving on noisier quads
+#
+# AOS tune (Rosser's recommendation, slightly better):
+#   - Single dynamic BIQUAD
+#   - Less delay of useful signals (<90 Hz range)
+#   - Better motor noise rejection at high throttle
+#   - Needs manual CLI tuning (can't use slider)
+#
+# We start with KARATE for safety. Switch to AOS after confirming clean logs.
+
+# --- KARATE (default approach) ---
+# Tune: nudge dterm filter multiplier up 0.05-0.1 at a time until motors get warm/rough,
+# then back off. OR set manually here based on blackbox analysis.
+set dterm_lpf1_dyn_min_hz = 75
+set dterm_lpf1_dyn_max_hz = 150
+set dterm_lpf1_type = PT1
+set dterm_lpf2_hz = 150
+set dterm_lpf2_type = PT1
+
+# Dynamic curve expo: controls how fast cutoff moves between min and max throttle.
+# Default 5 = linear. Higher = faster ramp at low throttle, less delay.
+# Push as high as possible without mid-throttle oscillations.
+set dterm_lpf1_dyn_expo = 5
+
+# --- AOS tune (uncomment to switch) ---
+# set simplified_dterm_filter = OFF   ← disable profile-dependent filter first
+# set dterm_lpf1_dyn_min_hz = 80     ← tune up from here until zero-throttle oscillation, back off
+# set dterm_lpf1_dyn_max_hz = 110    ← tune up from here until full-throttle oscillation, back off
+# set dterm_lpf1_type = BIQUAD
+# set dterm_lpf2_hz = 0              ← disable LPF2 when using AOS
+# set dterm_lpf1_dyn_expo = 7        ← push higher for less mid-throttle delay
+
+# -------------------------------------------------------
+# YAW LOW PASS FILTER
+# -------------------------------------------------------
+# Rosser: "Yaw responds much more slowly than roll/pitch.
+#  Filter delay on yaw is less of a concern.
+#  Reducing yaw noise gives more headroom for roll/pitch."
+# Default value is fine. Can try disabling for max yaw responsiveness.
+set yaw_lowpass_hz = 100
+
+# -------------------------------------------------------
+# BLACKBOX SETTINGS FOR FILTER ANALYSIS
+# -------------------------------------------------------
+# Rosser: In BF 4.5, raw gyro is ALWAYS logged regardless of debug mode.
+# Ideal logging rate: 1.6K or 2K (not 4K/8K — fills flash too fast).
+# set blackbox_sample_rate = 1/2    ← = 2 kHz (ideal)
 
 save
