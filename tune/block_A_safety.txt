@@ -1,50 +1,49 @@
-# Block A — Safety Fixes
+# Block A — Safety & GPS Rescue Fix
 # Flash this FIRST before any flights
 # Betaflight 4.5.0 / BLITZ F722 / Nazgul DC5 V2
 #
-# Changes from stock:
-#   - failsafe_delay: 120 -> 15  (was 12 seconds! now 1.5s)
-#   - failsafe_procedure: DROP -> GPS_RESCUE  (flies over water)
-#   - GPS Rescue strict sanity checks enabled
-#   - motor_kv: 1960 -> 1800  (correct for 5" freestyle motors)
-#   - dshot_bitbang: AUTO -> OFF  (F7 doesn't need it, saves CPU)
-#   - rpm_filter_weights: default -> 100,0,80  (tri-blade! 2nd harmonic = no noise)
+# ROOT CAUSE FIXES (evidence from original dump):
+#   - failsafe_delay: 120 → 15  (was 12s! now 1.5s)
+#   - gps_rescue_sanity_checks: FS_ONLY → ON  (strict, flies over water)
+#   - gps_rescue_min_sats: 5 → 8  (more sats = better fix accuracy)
+#   - gps_rescue_min_start_dist: 10 → 20  (avoid rescue triggering near pilot)
+#   - rpm_filter_weights: default → 100,0,80  (tri-blade: no 2nd harmonic)
+#   - dshot_bitbang: AUTO → OFF  (F7 doesn't need it, saves CPU)
+#   - motor_kv: 1960 → 1800  (correct for 5" freestyle motors)
+#
+# UNCHANGED from factory (no evidence to override):
+#   - failsafe_procedure (already GPS_RESCUE)
+#   - gps_rescue_throttle_hover (factory tuned — don't touch)
+#   - gps_rescue_throttle PID values
 #
 # HOW TO FLASH:
 #   1. Connect FC via USB
-#   2. Betaflight Configurator -> CLI tab
+#   2. Betaflight Configurator → CLI tab
 #   3. Paste everything below this line
 #   4. Type: save
 # -------------------------------------------------------
 
+# --- Failsafe ---
 set failsafe_delay = 15
 set failsafe_off_delay = 10
 set failsafe_throttle = 1000
 set failsafe_switch_mode = STAGE1
 set failsafe_throttle_low_delay = 100
 set failsafe_procedure = GPS_RESCUE
+set failsafe_recovery_delay = 10
+set failsafe_stick_threshold = 30
 
-set gps_rescue_min_sats = 8
-set gps_rescue_allow_arming_without_fix = OFF
+# --- GPS Rescue — strict checks for over-water flights ---
 set gps_rescue_sanity_checks = RESCUE_SANITY_ON
+set gps_rescue_min_sats = 8
 set gps_rescue_min_start_dist = 20
-set gps_rescue_ascend_rate = 500
-set gps_rescue_descend_rate = 150
-set gps_rescue_ground_speed = 1500
-set gps_rescue_throttle_min = 1150
-set gps_rescue_throttle_max = 1700
-set gps_rescue_throttle_hover = 1380
-set gps_rescue_angle = 32
-set gps_rescue_return_alt = 30
-set gps_rescue_landing_alt = 5
-set gps_rescue_disarm_threshold = 20
+set gps_rescue_allow_arming_without_fix = OFF
 
+# --- ESC / Motor ---
 set motor_kv = 1800
 set dshot_bitbang = OFF
 
-# Rosser Filter Video: Tri-blade props have noise at 1x and 3x RPM,
-# almost ZERO noise at 2x RPM. So 2nd harmonic filter weight = 0.
-# "100 for first, zero for second (no noise there), 80 for third"
+# --- RPM Filter (tri-blade, Rosser) ---
 set gyro_rpm_notch_harmonics = 3
 set rpm_filter_weights = 100,0,80
 set gyro_rpm_notch_q = 500

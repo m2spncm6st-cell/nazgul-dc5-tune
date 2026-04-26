@@ -1,0 +1,35 @@
+# Profile Switch on AUX6
+# Betaflight 4.5.0 / BLITZ F722 / Nazgul DC5 V2
+#
+# Switch behavior:
+#   AUX6 LOW  (900-1300)  → PID Profile 0 + Rate Profile 0 (FREESTYLE)
+#   AUX6 HIGH (1700-2100) → PID Profile 1 + Rate Profile 1 (CINEMATIC)
+#
+# How adjrange works:
+#   Function 11 = PID_PROFILE_SELECT    (changes PID profile by switch position)
+#   Function 12 = RATE_PROFILE_SELECT   (changes rate profile by switch position)
+#
+# Channel index in CLI: 5 = AUX6 (CLI is 0-indexed: 0=AUX1, 5=AUX6)
+#
+# PREREQUISITE: Both profiles 0 and 1 must already be flashed
+# (profile_freestyle.txt + profile_cinematic.txt)
+#
+# HOW TO FLASH:
+#   1. Connect FC via USB → Betaflight CLI
+#   2. Paste below
+#   3. Type: save
+#
+# VERIFY: Open Betaflight Configurator → toggle AUX6 switch → watch the
+# active profile indicator change between Profile 1 and Profile 2 (UI is 1-indexed)
+# -------------------------------------------------------
+
+# --- PID Profile Switch on AUX6 ---
+# Slot 0: When AUX6 is in range 900-2100, function 11 sets PID profile
+#         based on switch position (low=0, mid=1, high=2)
+adjrange 0 0 5 900 2100 11 5 900 2100
+
+# --- Rate Profile Switch on AUX6 (linked to PID profile) ---
+# Slot 1: Same switch also changes rate profile
+adjrange 1 0 5 900 2100 12 5 900 2100
+
+save

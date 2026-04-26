@@ -29,7 +29,11 @@
 | **0** | Freestyle | 0 — high stick feel, punchy |
 | **1** | Cinematic / Long Range | 1 — smooth, slow expo |
 
-Switch profile via **SA** (AUX channel) on transmitter.
+Switch profile via **AUX6**:
+- AUX6 **low** (900–1300) → Profile 0 (Freestyle)
+- AUX6 **high** (1700–2100) → Profile 1 (Cinematic)
+
+Setup: flash `tune/profile_switch_aux6.txt` after both profiles are flashed.
 
 ---
 
@@ -54,7 +58,8 @@ Switch profile via **SA** (AUX channel) on transmitter.
 │   ├── block_B_filters.txt      # Block B: Filter optimization (after blackbox)
 │   ├── block_C_pids.txt         # Block C: PID fine-tune (after blackbox)
 │   ├── profile_freestyle.txt    # Profile 0: Freestyle PIDs + rates
-│   └── profile_cinematic.txt    # Profile 1: Cinematic/LR PIDs + rates
+│   ├── profile_cinematic.txt    # Profile 1: Cinematic/LR PIDs + rates
+│   └── profile_switch_aux6.txt  # AUX6 toggle between profile 0/1
 ├── blackbox/                    # Flight logs go here
 │   └── .gitkeep
 ├── docs/
@@ -68,13 +73,17 @@ Switch profile via **SA** (AUX channel) on transmitter.
 
 ## Tuning Workflow
 
-1. **Flash Block A** — safety fixes (failsafe, GPS rescue, motor KV)
-2. **Do tuning flight** — follow `docs/flight_protocol.md`
-3. **Analyze blackbox** — follow `docs/filter_analysis.md`
-4. **Flash Block B** — filter settings based on analysis
-5. **Do another flight** — confirm clean gyro trace
-6. **Flash Block C** — PID fine-tune
-7. **Repeat flights** — iterate until perfect
+1. **Flash Block A** — safety fixes (failsafe, GPS rescue, RPM filter)
+2. **Flash Profile 0** (`profile_freestyle.txt`)
+3. **Flash Profile 1** (`profile_cinematic.txt`)
+4. **Flash Profile Switch** (`profile_switch_aux6.txt`)
+5. **Verify in Configurator** — toggle AUX6, confirm profile changes
+6. **Do tuning flight** — follow `docs/flight_protocol.md`
+7. **Analyze blackbox** — follow `docs/filter_analysis.md`
+8. **Flash Block B** — filter settings based on analysis
+9. **Repeat flight** — confirm clean gyro trace
+10. **Flash Block C** — PID fine-tune
+11. **Iterate** — one variable at a time per flight
 
 ---
 
