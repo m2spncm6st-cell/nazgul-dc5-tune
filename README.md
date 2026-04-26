@@ -1,6 +1,5 @@
 # iFlight Nazgul DC5 V2 — Betaflight Tune Project
 
-**Pilot:** Alex  
 **Date started:** 2026-04-25  
 **Betaflight version:** 4.5.0  
 **FC:** iFlight BLITZ F7 (STM32F7X2)
